@@ -2,7 +2,7 @@
 
 **Course:** Prompt Engineering: Principles, Techniques & Applications  
 **Institution:** Chanakya University — School of Engineering  
-**Instructor:** Mr. Deepak B  
+ Mr. Deepak B  
 
 ---
 
