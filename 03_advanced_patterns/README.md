@@ -30,8 +30,6 @@ By the end of this topic, you will be able to:
 
 ## Week 3 Assignment: Build a RAG System
 
-> **This is your graded assignment for this topic.**  
-> Read the full brief: [assignments/week3_rag_assignment.md](../assignments/week3_rag_assignment.md)
 
 ### Quick Overview
 
