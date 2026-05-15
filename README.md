@@ -146,7 +146,7 @@ python app.py
 | Google AI Studio | [aistudio.google.com](https://aistudio.google.com) | All prompting exercises |
 | Google Gemini API | [ai.google.dev](https://ai.google.dev) | RAG system backend |
 | GitHub | [github.com](https://github.com) | Code repository |
-| DigiCampus | [digicampus.in](https://digicampus.in) | Assignment submission |
+
 
 ---
 
