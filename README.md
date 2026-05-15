@@ -150,12 +150,7 @@ python app.py
 
 ---
 
-## Course Textbook Reference
 
-This repository accompanies the course textbook:  
-**"Prompt Engineering: Principles, Techniques & Applications"** — Mr. Deepak B, Chanakya University, 2026
-
-The textbook is available through the university library portal and DigiCampus resources.
 
 ---
 
