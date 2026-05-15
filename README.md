@@ -2,7 +2,7 @@
 
 > **Open Educational Resource** — Free for anyone to learn, fork, and build on.  
 > Originally created for MCA students at Chanakya University — School of Engineering.  
-> **Instructor:** Mr. Deepak B
+> Mr. Deepak B
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/deepak5256/Prompt-Engineering/pulls)
