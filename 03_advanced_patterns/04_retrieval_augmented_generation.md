@@ -32,42 +32,42 @@ RAG fixes this by giving the model **real-time access to your documents** at que
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    RAG SYSTEM ARCHITECTURE                   │
+│                    RAG SYSTEM ARCHITECTURE                  │
 │                                                             │
-│  OFFLINE (Indexing Pipeline)                               │
-│  ┌────────────┐    ┌──────────────┐    ┌───────────────┐  │
-│  │  Documents │───▶│   Chunking   │───▶│  Embedding    │  │
-│  │  (PDF/TXT) │    │  (split text)│    │  Model        │  │
-│  └────────────┘    └──────────────┘    └───────┬───────┘  │
-│                                                 │           │
-│                                                 ▼           │
-│                                        ┌─────────────────┐ │
-│                                        │   Vector Store  │ │
-│                                        │   (ChromaDB)    │ │
-│                                        └────────┬────────┘ │
+│  OFFLINE (Indexing Pipeline)                                │
+│  ┌────────────┐    ┌──────────────┐    ┌───────────────┐    │
+│  │  Documents │───▶│   Chunking  │───▶│  Embedding    │    │
+│  │  (PDF/TXT) │    │  (split text)│    │  Model        │    │
+│  └────────────┘    └──────────────┘    └───────┬───────┘    │
+│                                                │            │
+│                                                ▼            │
+│                                        ┌─────────────────┐  │
+│                                        │   Vector Store  │  │
+│                                        │   (ChromaDB)    │  │
+│                                        └────────┬────────┘  │
 │                                                 │           │
 │  ONLINE (Query Pipeline)                        │           │
 │  ┌────────────┐    ┌──────────────┐             │           │
-│  │  User      │───▶│   Embed      │             │           │
+│  │  User      │───▶│   Embed     │             │           │
 │  │  Query     │    │   Query      │             │           │
 │  └────────────┘    └──────┬───────┘             │           │
 │                           │                     │           │
-│                           ▼     similarity       │           │
-│                    ┌──────────────┐  search      │           │
-│                    │  Retriever   │◀─────────────┘           │
-│                    └──────┬───────┘                          │
-│                           │ top-K chunks                     │
-│                           ▼                                  │
-│                    ┌──────────────┐                          │
-│                    │   Augmented  │                          │
-│                    │   Prompt     │                          │
-│                    │  (context +  │                          │
-│                    │   question)  │                          │
-│                    └──────┬───────┘                          │
-│                           │                                  │
-│                           ▼                                  │
+│                           ▼     similarity      │           │
+│                    ┌──────────────┐  search     │           │
+│                    │  Retriever   │◀─────────────┘         │
+│                    └──────┬───────┘                         │
+│                           │ top-K chunks                    │
+│                           ▼                                 │
+│                    ┌──────────────┐                         │
+│                    │   Augmented  │                         │
+│                    │   Prompt     │                         │
+│                    │  (context +  │                         │
+│                    │   question)  │                         │
+│                    └──────┬───────┘                         │
+│                           │                                 │
+│                           ▼                                 │
 │                    ┌──────────────┐    ┌──────────────────┐ │
-│                    │    LLM       │───▶│   Grounded       │ │
+│                    │    LLM       │──▶│   Grounded       │ │
 │                    │  (Gemini)    │    │   Answer         │ │
 │                    └──────────────┘    └──────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
