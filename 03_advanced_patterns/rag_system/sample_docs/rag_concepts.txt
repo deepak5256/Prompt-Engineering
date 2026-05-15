@@ -1,0 +1,125 @@
+RETRIEVAL-AUGMENTED GENERATION (RAG) — COMPLETE GUIDE
+Course: Prompt Engineering | Chanakya University — School of Engineering
+Instructor: Mr. Deepak B
+
+WHAT IS RAG?
+
+Retrieval-Augmented Generation (RAG) is an AI architecture that enhances LLM responses by retrieving relevant information from an external knowledge base at query time, then including that information in the prompt as context.
+
+RAG was formalized by Lewis et al. in the 2020 paper "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" (Facebook AI Research / UCL / NYU).
+
+THE CORE PROBLEM RAG SOLVES
+
+LLMs have a fundamental limitation: they only know what was in their training data, and that data has a cutoff date. They cannot access your organization's internal documents, real-time data, or proprietary knowledge. When asked about these topics, they hallucinate.
+
+RAG solves this by giving the LLM a retrieval system that searches your documents at query time and injects the relevant passages directly into the prompt.
+
+RAG PIPELINE STAGES
+
+Stage 1 — Document Ingestion
+Load source documents (PDF, TXT, DOCX, HTML) into the pipeline. Text extraction handles different formats: pypdf for PDFs, python-docx for Word documents, BeautifulSoup for HTML.
+
+Stage 2 — Text Chunking
+Split documents into smaller, semantically coherent pieces called chunks. Standard chunking uses 500-800 characters with 100-150 character overlap between consecutive chunks. Overlap prevents important information that spans chunk boundaries from being lost.
+
+Stage 3 — Embedding Generation
+Convert each chunk into a dense numerical vector (embedding) using a pre-trained model. Embeddings from sentence-transformers (e.g., all-MiniLM-L6-v2) create 384-dimensional vectors. Text with similar meaning produces similar (geometrically close) vectors.
+
+Stage 4 — Vector Storage
+Store embeddings in a vector database (ChromaDB, Pinecone, Weaviate, Qdrant). ChromaDB is ideal for local development: it stores data persistently on disk, requires no external service, and supports cosine similarity search out of the box.
+
+Stage 5 — Retrieval
+When a user asks a question, embed the question and perform a similarity search in the vector database. Retrieve the top-K chunks with highest cosine similarity. These are the most semantically relevant passages from your knowledge base.
+
+Stage 6 — Augmented Generation
+Construct a prompt that includes the retrieved chunks as context, then call the LLM. The system prompt instructs the model to answer only from the provided context, preventing hallucination.
+
+VECTOR SIMILARITY EXPLAINED
+
+Cosine similarity measures the angle between two vectors regardless of their magnitude. A cosine similarity of 1.0 means identical direction (very similar meaning), 0.0 means perpendicular (unrelated), and -1.0 means opposite.
+
+When we embed "How do I reset my password?" and "Password recovery instructions", both produce similar 384-dimensional vectors. The cosine similarity between them is high (~0.85+), so the password recovery document is retrieved when the user asks the reset question.
+
+CHROMADB ARCHITECTURE
+
+ChromaDB is a local vector database that:
+- Stores embeddings as HNSW (Hierarchical Navigable Small World) graphs for fast approximate nearest neighbor search
+- Persists data to disk using DuckDB + Parquet
+- Supports metadata filtering (by source, date, category, etc.)
+- Runs entirely in Python with no external dependencies
+
+Collections in ChromaDB are analogous to tables in SQL. Each entry has: an ID, the original text (document), its embedding vector, and optional metadata.
+
+SENTENCE TRANSFORMERS
+
+Sentence Transformers (from the paper "Sentence-BERT", Reimers & Gurevych, 2019) are models specifically trained to produce semantically meaningful sentence embeddings.
+
+The model all-MiniLM-L6-v2:
+- 384-dimensional output embeddings
+- 22M parameters (fast and lightweight)
+- Trained on over 1 billion sentence pairs
+- MTEB (Massive Text Embedding Benchmark) score: 56.3
+- Download size: ~80MB, runs on CPU
+
+For production systems requiring higher quality: all-mpnet-base-v2 (768-dim, better quality) or text-embedding-3-small via OpenAI API.
+
+RAG vs FINE-TUNING
+
+Fine-tuning modifies model weights through additional training on domain-specific data.
+RAG retrieves domain-specific information at inference time without changing weights.
+
+When to use RAG:
+- Knowledge changes frequently (news, product updates, policies)
+- You need to cite sources
+- Budget is limited (no GPU training required)
+- Data is proprietary and cannot be sent to a training pipeline
+- You need to add knowledge quickly
+
+When to use fine-tuning:
+- You need a consistent writing style or persona
+- The domain vocabulary is highly specialized and not in training data
+- Latency is critical (no retrieval step)
+- Task requires behavioral changes, not just knowledge
+
+ADVANCED RAG TECHNIQUES
+
+Hybrid Search: Combine dense retrieval (embeddings) with sparse retrieval (BM25 keyword search). Dense retrieval excels at semantic similarity; sparse retrieval handles exact technical terms. Combined: score = alpha * dense_score + (1-alpha) * sparse_score.
+
+Query Rewriting: Before retrieval, use an LLM to rewrite the user's query into a more retrieval-friendly form. "What's the deadline?" becomes "What are the submission deadline dates for the course assignments?"
+
+Re-Ranking: After retrieving top-K chunks, use a cross-encoder (a slower but more accurate model) to re-score and re-order them. Cross-encoders evaluate query-document pairs jointly, capturing interactions that bi-encoders miss.
+
+Metadata Filtering: Store metadata (source filename, page number, date, category) with each chunk. Filter by metadata before vector search to restrict retrieval to relevant document subsets.
+
+RAG EVALUATION WITH RAGAS
+
+RAGAS (RAG Assessment) provides four automated metrics:
+
+Faithfulness: Does the answer contain only information supported by the retrieved context? Measures hallucination risk.
+
+Answer Relevancy: Does the answer actually address the user's question? Measures whether the response is on-topic.
+
+Context Precision: Of the retrieved chunks, how many were actually used in generating the answer? Measures retrieval precision.
+
+Context Recall: Did the retrieved chunks contain all the information needed to answer correctly? Measures retrieval coverage.
+
+A production RAG system should target >0.85 on all four metrics.
+
+COMMON RAG FAILURES
+
+Lost in the Middle: LLMs tend to use information from the beginning and end of the context window, ignoring the middle. Fix: put the most relevant chunks first.
+
+Chunk Boundary Issues: A critical fact spans two chunks and neither chunk alone has the complete information. Fix: increase overlap between chunks.
+
+Wrong Retrieval: The embedding model retrieves chunks that are semantically similar but factually unrelated. Fix: use a larger, higher-quality embedding model or add hybrid search.
+
+Context Window Overflow: Too many retrieved chunks exceed the LLM's context limit. Fix: reduce top-K, use longer but fewer chunks, or implement context compression.
+
+PRODUCTION RAG STACK (2025)
+
+Embedding Model: text-embedding-3-small (OpenAI) or all-mpnet-base-v2 (local)
+Vector Database: Qdrant or Weaviate for enterprise; ChromaDB for prototyping
+Orchestration: LangChain or LlamaIndex
+LLM: Gemini 1.5 Pro, GPT-4o, or Claude 3.5 Sonnet
+Evaluation: RAGAS
+Observability: LangSmith or Arize Phoenix

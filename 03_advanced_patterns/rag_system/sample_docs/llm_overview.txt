@@ -1,0 +1,129 @@
+LARGE LANGUAGE MODELS — TECHNICAL OVERVIEW
+Course: Prompt Engineering | Chanakya University — School of Engineering
+Instructor: Mr. Deepak B
+
+WHAT IS A LARGE LANGUAGE MODEL?
+
+A Large Language Model (LLM) is a neural network trained on massive amounts of text data to predict the probability of the next token (word piece) given a sequence of preceding tokens. This seemingly simple objective — next token prediction — results in models that can write code, solve math problems, summarize documents, translate languages, and engage in complex reasoning.
+
+Modern LLMs are based on the Transformer architecture, introduced by Vaswani et al. in "Attention is All You Need" (2017). The key innovation was the self-attention mechanism, which allows every token in a sequence to directly attend to every other token, enabling parallel computation and capturing long-range dependencies.
+
+KEY LLMs IN 2025
+
+GPT-4o (OpenAI): 200B+ parameters, multimodal (text+image+audio), 128K context window. Powers ChatGPT Plus and the OpenAI API.
+
+Gemini 1.5 Pro (Google DeepMind): 1 million token context window, multimodal, trained on Google's proprietary data and code. Available via Google AI Studio and Vertex AI.
+
+Gemini 1.5 Flash: Lighter, faster, cheaper version of Gemini 1.5 Pro. Best for high-volume, cost-sensitive applications. Free tier available.
+
+Claude 3.5 Sonnet (Anthropic): Strong at instruction following, long documents, and code. Constitutional AI training for safety alignment.
+
+Llama 3.1 (Meta): Open-weight model (405B parameters), can run locally with sufficient hardware. Llama 3.2 adds vision capability.
+
+Mistral / Mixtral: European models, available as open weights. Mixtral uses a Mixture of Experts (MoE) architecture.
+
+THE TRANSFORMER ARCHITECTURE
+
+Encoder: Processes input text bidirectionally. Used in embedding models (BERT, all-MiniLM). Produces rich contextual representations.
+
+Decoder: Generates text autoregressively (one token at a time). Used in GPT-style models. Each generated token becomes part of the input for the next step.
+
+Encoder-Decoder: Combines both. Used in translation and summarization models (T5, BART).
+
+Modern LLMs like GPT and Gemini are decoder-only transformers.
+
+THE ATTENTION MECHANISM
+
+Self-attention computes a weighted sum of all token representations, where weights reflect how relevant each token is to every other token.
+
+For each token, attention computes:
+- Query (Q): What this token is looking for
+- Key (K): What this token offers to others
+- Value (V): The actual information this token carries
+
+Attention weight = softmax(Q × K^T / sqrt(d_k))
+Output = Attention weight × V
+
+Multi-head attention runs this computation H times in parallel with different learned projections, allowing the model to attend to different types of relationships simultaneously.
+
+TRAINING PIPELINE
+
+Pre-training: Train on trillions of tokens from internet text, books, and code using next-token prediction. This creates a "base model" with broad world knowledge.
+
+Supervised Fine-Tuning (SFT): Fine-tune on high-quality instruction-response pairs. The model learns to follow instructions rather than just predict text.
+
+Reinforcement Learning from Human Feedback (RLHF): Train a reward model on human preferences (which response is better?), then optimize the LLM to generate responses that maximize this reward using PPO (Proximal Policy Optimization).
+
+Constitutional AI (CAI): Anthropic's approach — the model critiques and revises its own outputs according to a set of principles, reducing human labeling requirements.
+
+TOKENIZATION
+
+LLMs don't process words — they process tokens. Tokenization splits text into sub-word units:
+- "unbelievable" might tokenize as ["un", "believ", "able"]
+- "ChatGPT" might be one token or split depending on the tokenizer
+- Code, numbers, and special characters are split differently from natural language
+
+GPT-4 uses tiktoken (BPE). Gemini uses SentencePiece. Most models have vocabularies of 30,000-100,000 tokens.
+
+1 token ≈ 0.75 words in English. A page of text is roughly 400-500 tokens.
+
+CONTEXT WINDOW
+
+The context window is the maximum number of tokens an LLM can process in a single forward pass. All tokens in the window can attend to each other.
+
+- GPT-4: 128K tokens (~96,000 words)
+- Gemini 1.5 Pro: 1,000,000 tokens (~750,000 words — an entire large novel)
+- Claude 3.5 Sonnet: 200K tokens
+
+Practical implications for RAG: With a 128K context window, you can inject many retrieved chunks. However, the "lost in the middle" problem means models perform better when key information is at the start or end of the context.
+
+HALLUCINATION
+
+Hallucination refers to LLMs generating text that is factually incorrect but stated confidently. This occurs because:
+1. The model optimizes for plausible next tokens, not factual accuracy
+2. Gaps in training data cause the model to "fill in" from related patterns
+3. Long-tail knowledge (specific facts, dates, citations) is poorly represented
+
+Types of hallucination:
+- Factual errors: Wrong dates, statistics, names
+- Citation fabrication: Inventing papers, URLs, quotes
+- Entity confusion: Mixing attributes of different entities
+- Reasoning errors: Correct steps but wrong conclusion
+
+Mitigation strategies:
+- RAG: Ground responses in retrieved documents
+- Grounding instructions: "Answer only from the provided context"
+- Self-consistency: Sample multiple times and vote
+- Factual verification: Post-process with a separate fact-checking prompt
+
+INFERENCE PARAMETERS
+
+Temperature: Controls sampling randomness (0.0 = deterministic, 1.0+ = creative)
+Top-P: Nucleus sampling — sample from smallest token set covering P% of probability mass
+Top-K: Limit sampling to the K most probable tokens
+Max tokens: Hard limit on output length
+Stop sequences: Strings that cause generation to halt immediately
+
+COST CONSIDERATIONS
+
+LLM APIs charge per token (input + output):
+- Gemini 1.5 Flash: Free tier (15 req/min, 1M tokens/day); paid ~$0.075/1M input tokens
+- GPT-4o: ~$5/1M input tokens, ~$15/1M output tokens
+- Claude 3.5 Sonnet: ~$3/1M input tokens, ~$15/1M output tokens
+
+For a RAG system processing 1000 queries/day with 2000 tokens per query (context + answer):
+- Gemini Flash: Free on free tier
+- GPT-4o: ~$10/day
+- Claude Sonnet: ~$6/day
+
+RESPONSIBLE AI AND LLM SAFETY
+
+Bias: LLMs inherit biases from training data (gender, race, political). Evaluate outputs across demographic groups.
+
+Toxicity: Models can generate harmful content. Use content safety filters or model-level safety training.
+
+Privacy: LLMs may memorize training data, potentially exposing sensitive information. Use private deployment or data minimization.
+
+Transparency: Users should know they are interacting with AI. Disclose AI involvement in generated content.
+
+The EU AI Act (2024) classifies certain LLM applications as high-risk (medical, legal, HR), requiring conformity assessments, documentation, and human oversight.

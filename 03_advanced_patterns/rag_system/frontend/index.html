@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG System — Chanakya University</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e; --surface: #111827; --surface2: #1a2235;
+    --border: #1e2d45; --accent: #6366f1; --accent2: #8b5cf6;
+    --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+    --text: #e2e8f0; --muted: #64748b; --white: #ffffff;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* Header */
+  header { background: linear-gradient(135deg, #1a1f3a 0%, #0f172a 100%); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .logo-text h1 { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+  .logo-text p { font-size: 0.75rem; color: var(--muted); }
+  .status-badge { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+  .status-dot.ready { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-dot.loading { background: var(--yellow); animation: pulse 1s infinite; }
+
+  /* Main layout */
+  main { flex: 1; display: grid; grid-template-columns: 320px 1fr; gap: 0; }
+
+  /* Sidebar */
+  aside { background: var(--surface); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .sidebar-section { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .sidebar-section h3 { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+
+  /* Buttons */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 16px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { background: var(--bg); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+  /* Info items */
+  .info-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+  .info-item:last-child { border-bottom: none; }
+  .info-label { color: var(--muted); }
+  .info-value { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Text ingest area */
+  textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.8rem; padding: 10px; resize: vertical; min-height: 80px; margin-bottom: 8px; }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  input[type="text"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.8rem; padding: 8px 10px; margin-bottom: 8px; }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+  /* Chat area */
+  .chat-area { display: flex; flex-direction: column; height: calc(100vh - 73px); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .chat-messages::-webkit-scrollbar { width: 6px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Messages */
+  .message { max-width: 85%; animation: slideIn 0.3s ease; }
+  .message.user { align-self: flex-end; }
+  .message.assistant { align-self: flex-start; }
+  .message-bubble { padding: 14px 18px; border-radius: var(--radius); line-height: 1.6; font-size: 0.9rem; }
+  .message.user .message-bubble { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; border-bottom-right-radius: 4px; }
+  .message.assistant .message-bubble { background: var(--surface2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .message-meta { font-size: 0.7rem; color: var(--muted); margin-top: 6px; padding: 0 4px; }
+  .message.user .message-meta { text-align: right; }
+
+  /* Sources */
+  .sources { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .source-tag { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: var(--accent); border-radius: 4px; padding: 3px 8px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; }
+
+  /* Chunks accordion */
+  .chunks-toggle { background: none; border: none; color: var(--muted); font-size: 0.75rem; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+  .chunks-toggle:hover { color: var(--text); }
+  .chunks-list { display: none; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .chunk-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; font-size: 0.78rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.5; }
+  .chunk-score { color: var(--green); font-weight: 600; }
+
+  /* Welcome */
+  .welcome { align-self: center; text-align: center; padding: 40px 20px; max-width: 400px; }
+  .welcome-icon { font-size: 3rem; margin-bottom: 16px; }
+  .welcome h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
+  .welcome p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+  /* Input bar */
+  .chat-input-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 16px 24px; }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem; padding: 12px 16px; resize: none; min-height: 48px; max-height: 120px; transition: border-color 0.2s; }
+  .chat-input:focus { outline: none; border-color: var(--accent); }
+  .send-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: var(--radius-sm); color: white; width: 48px; height: 48px; cursor: pointer; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+  .send-btn:hover { opacity: 0.9; transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .input-hint { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+  /* Typing indicator */
+  .typing { display: flex; align-items: center; gap: 6px; padding: 14px 18px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); border-bottom-left-radius: 4px; width: fit-content; }
+  .typing-dot { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 0.85rem; z-index: 1000; animation: slideInRight 0.3s ease; }
+  .toast.success { background: rgba(16,185,129,0.2); border: 1px solid var(--green); color: var(--green); }
+  .toast.error { background: rgba(239,68,68,0.2); border: 1px solid var(--red); color: var(--red); }
+  .toast.info { background: rgba(99,102,241,0.2); border: 1px solid var(--accent); color: var(--accent); }
+
+  @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; }
+    aside { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔍</div>
+    <div class="logo-text">
+      <h1>RAG System</h1>
+      <p>Chanakya University — School of Engineering | Mr. Deepak B</p>
+    </div>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Checking...</span>
+  </div>
+</header>
+
+<main>
+  <!-- Sidebar -->
+  <aside>
+    <!-- Stats -->
+    <div class="sidebar-section">
+      <h3>Knowledge Base</h3>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="chunkCount">0</div>
+          <div class="stat-label">Chunks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="queryCount">0</div>
+          <div class="stat-label">Queries</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="sidebar-section">
+      <h3>System Info</h3>
+      <div class="info-item">
+        <span class="info-label">LLM</span>
+        <span class="info-value" id="llmModel">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Embeddings</span>
+        <span class="info-value" id="embedModel">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Vector DB</span>
+        <span class="info-value">ChromaDB</span>
+      </div>
+    </div>
+
+    <!-- Ingest Sample Docs -->
+    <div class="sidebar-section">
+      <h3>Load Documents</h3>
+      <button class="btn btn-primary" id="ingestBtn" onclick="ingestDocuments()">
+        📚 Ingest Sample Docs
+      </button>
+    </div>
+
+    <!-- Add Custom Text -->
+    <div class="sidebar-section">
+      <h3>Add Custom Text</h3>
+      <input type="text" id="textSource" placeholder="Source name (e.g. my_notes.txt)">
+      <textarea id="customText" placeholder="Paste any text here to add it to the knowledge base..."></textarea>
+      <button class="btn btn-primary" onclick="ingestCustomText()">➕ Add Text</button>
+    </div>
+
+    <!-- Reset -->
+    <div class="sidebar-section">
+      <h3>Danger Zone</h3>
+      <button class="btn btn-danger" onclick="resetKnowledgeBase()">🗑️ Clear Knowledge Base</button>
+    </div>
+  </aside>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="chat-messages" id="chatMessages">
+      <div class="welcome">
+        <div class="welcome-icon">🧠</div>
+        <h2>RAG-Powered Q&A</h2>
+        <p>Load the sample documents using <strong>"Ingest Sample Docs"</strong> on the left, then ask any question. The system retrieves relevant passages and generates a grounded answer.</p>
+      </div>
+    </div>
+
+    <div class="chat-input-bar">
+      <div class="input-row">
+        <textarea class="chat-input" id="questionInput" placeholder="Ask a question about your documents..." rows="1"
+          onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendQuestion();}"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendQuestion()">➤</button>
+      </div>
+      <div class="input-hint">Press Enter to send · Shift+Enter for new line · Answers are grounded in your documents</div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const API = '';  // Same origin
+  let queryCount = 0;
+
+  // ── Status polling ──────────────────────────────────────────────────────────
+  async function checkStatus() {
+    try {
+      const res = await fetch(`${API}/status`);
+      const data = await res.json();
+      document.getElementById('chunkCount').textContent = data.total_chunks ?? 0;
+      document.getElementById('llmModel').textContent = data.llm_model ?? '—';
+      document.getElementById('embedModel').textContent = (data.embedding_model ?? '—').replace('all-', '');
+      const dot = document.getElementById('statusDot');
+      const txt = document.getElementById('statusText');
+      if (data.ready) { dot.className = 'status-dot ready'; txt.textContent = 'Ready'; }
+      else { dot.className = 'status-dot'; txt.textContent = `${data.total_chunks} chunks`; }
+    } catch (e) {
+      document.getElementById('statusDot').className = 'status-dot loading';
+      document.getElementById('statusText').textContent = 'Connecting...';
+    }
+  }
+  checkStatus();
+  setInterval(checkStatus, 5000);
+
+  // ── Ingest documents ────────────────────────────────────────────────────────
+  async function ingestDocuments() {
+    const btn = document.getElementById('ingestBtn');
+    btn.disabled = true; btn.textContent = '⏳ Loading...';
+    showToast('Ingesting documents... This may take a moment.', 'info');
+    try {
+      const res = await fetch(`${API}/ingest`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Ingestion failed');
+      showToast(`✅ ${data.documents_processed} docs · ${data.total_chunks_added} chunks added`, 'success');
+      checkStatus();
+    } catch (e) { showToast(`❌ ${e.message}`, 'error'); }
+    finally { btn.disabled = false; btn.textContent = '📚 Ingest Sample Docs'; }
+  }
+
+  async function ingestCustomText() {
+    const text = document.getElementById('customText').value.trim();
+    const source = document.getElementById('textSource').value.trim() || 'custom_input';
+    if (!text) { showToast('Please enter some text first.', 'error'); return; }
+    showToast('Adding text to knowledge base...', 'info');
+    try {
+      const res = await fetch(`${API}/ingest/text`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text, source })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed');
+      showToast(`✅ ${data.total_chunks_added} chunks added from "${source}"`, 'success');
+      document.getElementById('customText').value = '';
+      checkStatus();
+    } catch (e) { showToast(`❌ ${e.message}`, 'error'); }
+  }
+
+  async function resetKnowledgeBase() {
+    if (!confirm('Clear all documents from the knowledge base?')) return;
+    try {
+      await fetch(`${API}/reset`, { method: 'POST' });
+      showToast('Knowledge base cleared.', 'info');
+      checkStatus();
+    } catch (e) { showToast('Failed to reset.', 'error'); }
+  }
+
+  // ── Chat ────────────────────────────────────────────────────────────────────
+  async function sendQuestion() {
+    const input = document.getElementById('questionInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    // Clear welcome message on first query
+    const welcome = document.querySelector('.welcome');
+    if (welcome) welcome.remove();
+
+    // Add user message
+    addMessage('user', question);
+    input.value = '';
+
+    // Show typing indicator
+    const typingId = addTyping();
+    document.getElementById('sendBtn').disabled = true;
+
+    try {
+      const res = await fetch(`${API}/query`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Query failed');
+
+      removeTyping(typingId);
+      addMessage('assistant', data.answer, data.sources, data.retrieved_chunks);
+      queryCount++;
+      document.getElementById('queryCount').textContent = queryCount;
+    } catch (e) {
+      removeTyping(typingId);
+      addMessage('assistant', `Error: ${e.message}. Make sure the knowledge base has documents ingested.`, [], []);
+    } finally {
+      document.getElementById('sendBtn').disabled = false;
+      input.focus();
+    }
+  }
+
+  function addMessage(role, text, sources = [], chunks = []) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+
+    let sourcesHTML = '';
+    if (sources && sources.length > 0) {
+      sourcesHTML = `<div class="sources">${sources.map(s => `<span class="source-tag">📄 ${s}</span>`).join('')}</div>`;
+    }
+
+    let chunksHTML = '';
+    if (chunks && chunks.length > 0) {
+      const chunkItems = chunks.map((c, i) =>
+        `<div class="chunk-item"><span class="chunk-score">Score: ${c.relevance_score}</span> · ${c.source}<br>${c.text}</div>`
+      ).join('');
+      chunksHTML = `
+        <button class="chunks-toggle" onclick="toggleChunks(this)">▶ Show retrieved chunks (${chunks.length})</button>
+        <div class="chunks-list" style="display:none">${chunkItems}</div>`;
+    }
+
+    div.innerHTML = `
+      <div class="message-bubble">${text.replace(/\n/g, '<br>')}${sourcesHTML}${chunksHTML}</div>
+      <div class="message-meta">${role === 'user' ? 'You' : '🤖 RAG System'} · ${new Date().toLocaleTimeString()}</div>`;
+
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function toggleChunks(btn) {
+    const list = btn.nextElementSibling;
+    const open = list.style.display !== 'none';
+    list.style.display = open ? 'none' : 'flex';
+    btn.textContent = `${open ? '▶' : '▼'} ${open ? 'Show' : 'Hide'} retrieved chunks (${list.children.length})`;
+  }
+
+  function addTyping() {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    const id = 'typing_' + Date.now();
+    div.id = id;
+    div.className = 'message assistant';
+    div.innerHTML = `<div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+  }
+
+  function removeTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function showToast(msg, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+</script>
+</body>
+</html>
