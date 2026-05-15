@@ -54,7 +54,7 @@ python app.py
 
 ### Submission
 - Deploy your system and submit the **live URL** on DigiCampus
-- See the full rubric in the [assignment brief](../assignments/week3_rag_assignment.md)
+
 
 ---
 
