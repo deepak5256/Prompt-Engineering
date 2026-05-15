@@ -88,11 +88,6 @@ prompt-engineering/
 │   ├── 03_domain_specific_prompts.md
 │   └── 04_ethics_and_responsible_ai.md
 │
-├── assignments/                       # Assignment briefs and rubrics
-│   ├── week1_assignment.md
-│   ├── week2_assignment.md
-│   ├── week3_rag_assignment.md        ← Current assignment
-│   └── week4_assignment.md
 │
 └── README.md                          ← You are here
 ```
